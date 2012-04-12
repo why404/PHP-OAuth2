@@ -1,12 +1,12 @@
 <?php
-namespace OAuth2\GrantType;
 
-use OAuth2\InvalidArgumentException;
+require_once('../Exception.php');
+require_once('IGrantType.php');
 
 /**
  * Authorization code  Grant Type Validator
  */
-class AuthorizationCode implements IGrantType
+class OAuth2_GrantType_AuthorizationCode implements OAuth2_GrantType_IGrantType
 {
     /**
      * Defines the Grant Type
@@ -25,16 +25,16 @@ class AuthorizationCode implements IGrantType
     {
         if (!isset($parameters['code']))
         {
-            throw new InvalidArgumentException(
+            throw new OAuth2_InvalidArgumentException(
                 'The \'code\' parameter must be defined for the Authorization Code grant type',
-                InvalidArgumentException::MISSING_PARAMETER
+                OAuth2_InvalidArgumentException::MISSING_PARAMETER
             );
         }
         elseif (!isset($parameters['redirect_uri']))
         {
-            throw new InvalidArgumentException(
+            throw new OAuth2_InvalidArgumentException(
                 'The \'redirect_uri\' parameter must be defined for the Authorization Code grant type',
-                InvalidArgumentException::MISSING_PARAMETER
+                OAuth2_InvalidArgumentException::MISSING_PARAMETER
             );
         }
     }

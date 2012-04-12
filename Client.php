@@ -24,9 +24,15 @@
  * @author      Anis Berejeb <anis.berejeb@gmail.com>
  * @version     1.2-dev
  */
-namespace OAuth2;
 
-class Client
+require_once('Exception.php');
+require_once('GrantType/IGrantType.php');
+require_once('GrantType/AuthorizationCode.php');
+require_once('GrantType/ClientCredentials.php');
+require_once('GrantType/Password.php');
+require_once('GrantType/RefreshToken.php');
+
+class OAuth2_Client
 {
     /**
      * Different AUTH method
@@ -141,7 +147,7 @@ class Client
     public function __construct($client_id, $client_secret, $client_auth = self::AUTH_TYPE_URI, $certificate_file = null)
     {
         if (!extension_loaded('curl')) {
-            throw new Exception('The PHP exention curl must be installed to use this library.', Exception::CURL_NOT_FOUND);
+            throw new OAuth2_Exception('The PHP exention curl must be installed to use this library.', OAuth2_Exception::CURL_NOT_FOUND);
         }
 
         $this->client_id     = $client_id;
@@ -149,7 +155,7 @@ class Client
         $this->client_auth   = $client_auth;
         $this->certificate_file = $certificate_file;
         if (!empty($this->certificate_file)  && !is_file($this->certificate_file)) {
-            throw new InvalidArgumentException('The certificate file was not found', InvalidArgumentException::CERTIFICATE_NOT_FOUND);
+            throw new OAuth2_InvalidArgumentException('The certificate file was not found', OAuth2_InvalidArgumentException::CERTIFICATE_NOT_FOUND);
         }
     }
 
@@ -202,17 +208,18 @@ class Client
     public function getAccessToken($token_endpoint, $grant_type, array $parameters)
     {
         if (!$grant_type) {
-            throw new InvalidArgumentException('The grant_type is mandatory.', InvalidArgumentException::INVALID_GRANT_TYPE);
+            throw new OAuth2_InvalidArgumentException('The grant_type is mandatory.', OAuth2_InvalidArgumentException::INVALID_GRANT_TYPE);
         }
         $grantTypeClassName = $this->convertToCamelCase($grant_type);
-        $grantTypeClass =  __NAMESPACE__ . '\\GrantType\\' . $grantTypeClassName;
+        # $grantTypeClass =  __NAMESPACE__ . '\\GrantType\\' . $grantTypeClassName;
+        $grantTypeClass = 'OAuth2_GrantType_' . $grantTypeClassName;
         if (!class_exists($grantTypeClass)) {
-            throw new InvalidArgumentException('Unknown grant type \'' . $grant_type . '\'', InvalidArgumentException::INVALID_GRANT_TYPE);
+            throw new OAuth2_InvalidArgumentException('Unknown grant type \'' . $grant_type . '\'', OAuth2_InvalidArgumentException::INVALID_GRANT_TYPE);
         }
         $grantTypeObject = new $grantTypeClass();
         $grantTypeObject->validateParameters($parameters);
         if (!defined($grantTypeClass . '::GRANT_TYPE')) {
-            throw new Exception('Unknown constant GRANT_TYPE for class ' . $grantTypeClassName, Exception::GRANT_TYPE_ERROR);
+            throw new OAuth2_Exception('Unknown constant GRANT_TYPE for class ' . $grantTypeClassName, OAuth2_Exception::GRANT_TYPE_ERROR);
         }
         $parameters['grant_type'] = $grantTypeClass::GRANT_TYPE;
         $http_headers = array();
@@ -227,7 +234,7 @@ class Client
                 $http_headers['Authorization'] = 'Basic ' . base64_encode($this->client_id .  ':' . $this->client_secret);
                 break;
             default:
-                throw new Exception('Unknown client auth type.', Exception::INVALID_CLIENT_AUTHENTICATION_TYPE);
+                throw new OAuth2_Exception('Unknown client auth type.', OAuth2_Exception::INVALID_CLIENT_AUTHENTICATION_TYPE);
                 break;
         }
 
@@ -289,9 +296,9 @@ class Client
                     if (is_array($parameters)) {
                         $parameters[$this->access_token_param_name] = $this->access_token;
                     } else {
-                        throw new InvalidArgumentException(
+                        throw new OAuth2_InvalidArgumentException(
                             'You need to give parameters as array if you want to give the token within the URI.',
-                            InvalidArgumentException::REQUIRE_PARAMS_AS_ARRAY
+                            OAuth2_InvalidArgumentException::REQUIRE_PARAMS_AS_ARRAY
                         );
                     }
                     break;
@@ -305,7 +312,7 @@ class Client
                     $http_headers['Authorization'] = 'MAC ' . $this->generateMACSignature($protected_resource_url, $parameters, $http_method);
                     break;
                 default:
-                    throw new Exception('Unknown access token type.', Exception::INVALID_ACCESS_TOKEN_TYPE);
+                    throw new OAuth2_Exception('Unknown access token type.', OAuth2_Exception::INVALID_ACCESS_TOKEN_TYPE);
                     break;
             }
         }
@@ -437,7 +444,7 @@ class Client
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
         if ($curl_error = curl_error($ch)) {
-            throw new Exception($curl_error, Exception::CURL_ERROR);
+            throw new OAuth2_Exception($curl_error, OAuth2_Exception::CURL_ERROR);
         } else {
             $json_decode = json_decode($result, true);
         }
@@ -473,21 +480,4 @@ class Client
         array_walk($parts, function(&$item) { $item = ucfirst($item);});
         return implode('', $parts);
     }
-}
-
-class Exception extends \Exception
-{
-    const CURL_NOT_FOUND                     = 0x01;
-    const CURL_ERROR                         = 0x02;
-    const GRANT_TYPE_ERROR                   = 0x03;
-    const INVALID_CLIENT_AUTHENTICATION_TYPE = 0x04;
-    const INVALID_ACCESS_TOKEN_TYPE          = 0x05;
-}
-
-class InvalidArgumentException extends \InvalidArgumentException
-{
-    const INVALID_GRANT_TYPE      = 0x01;
-    const CERTIFICATE_NOT_FOUND   = 0x02;
-    const REQUIRE_PARAMS_AS_ARRAY = 0x03;
-    const MISSING_PARAMETER       = 0x04;
 }

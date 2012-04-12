@@ -1,12 +1,12 @@
 <?php
-namespace OAuth2\GrantType;
 
-use OAuth2\InvalidArgumentException;
+require_once('../Exception.php');
+require_once('IGrantType.php');
 
 /**
  * Refresh Token  Parameters
  */
-class RefreshToken implements IGrantType
+class OAuth2_GrantType_RefreshToken implements OAuth2_GrantType_IGrantType
 {
     /**
      * Defines the Grant Type
@@ -25,9 +25,9 @@ class RefreshToken implements IGrantType
     {
         if (!isset($parameters['refresh_token']))
         {
-            throw new InvalidArgumentException(
+            throw new OAuth2_InvalidArgumentException(
                 'The \'refresh_token\' parameter must be defined for the refresh token grant type',
-                InvalidArgumentException::MISSING_PARAMETER
+                OAuth2_InvalidArgumentException::MISSING_PARAMETER
             );
         }
     }
