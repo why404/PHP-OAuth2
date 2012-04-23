@@ -49,6 +49,11 @@ class OAuth2_Client
     const ACCESS_TOKEN_OAUTH    = 2;
     const ACCESS_TOKEN_MAC      = 3;
 
+    public $access_token_uri = self::ACCESS_TOKEN_URI;
+    public $access_token_bearer = self::ACCESS_TOKEN_BEARER;
+    public $access_token_oauth = self::ACCESS_TOKEN_OAUTH;
+    public $access_token_mac = self::ACCESS_TOKEN_MAC;
+
     /**
     * Different Grant types
     */
@@ -56,6 +61,11 @@ class OAuth2_Client
     const GRANT_TYPE_PASSWORD           = 'password';
     const GRANT_TYPE_CLIENT_CREDENTIALS = 'client_credentials';
     const GRANT_TYPE_REFRESH_TOKEN      = 'refresh_token';
+
+    public $grant_type_auth_code = self::GRANT_TYPE_AUTH_CODE;
+    public $grant_type_password = self::GRANT_TYPE_PASSWORD;
+    public $grant_type_client_credentials = self::GRANT_TYPE_CLIENT_CREDENTIALS;
+    public $grant_type_refresh_token = self::GRANT_TYPE_REFRESH_TOKEN;
 
     /**
      * HTTP Methods
@@ -65,6 +75,12 @@ class OAuth2_Client
     const HTTP_METHOD_PUT    = 'PUT';
     const HTTP_METHOD_DELETE = 'DELETE';
     const HTTP_METHOD_HEAD   = 'HEAD';
+
+    public $http_method_get = self::HTTP_METHOD_GET;
+    public $http_method_post = self::HTTP_METHOD_POST;
+    public $http_method_put = self::HTTP_METHOD_PUT;
+    public $http_method_delete = self::HTTP_METHOD_DELETE;
+    public $http_method_head = self::HTTP_METHOD_HEAD;
 
     /**
      * HTTP Form content types
@@ -218,10 +234,10 @@ class OAuth2_Client
         }
         $grantTypeObject = new $grantTypeClass();
         $grantTypeObject->validateParameters($parameters);
-        if (!defined($grantTypeClass . '::GRANT_TYPE')) {
+        if (!defined($grantTypeClass->grant_type)) {
             throw new OAuth2_Exception('Unknown constant GRANT_TYPE for class ' . $grantTypeClassName, OAuth2_Exception::GRANT_TYPE_ERROR);
         }
-        $parameters['grant_type'] = $grantTypeClass::GRANT_TYPE;
+        $parameters['grant_type'] = $grantTypeClass->grant_type;
         $http_headers = array();
         switch ($this->client_auth) {
             case self::AUTH_TYPE_URI:
